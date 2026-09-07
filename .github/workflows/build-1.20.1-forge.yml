@@ -2,6 +2,13 @@ name: Build Neo Voxy 1.20.1 Forge
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - multiversion
+    paths:
+      - 'editions/forge-1.20.1-client/**'
+      - 'scripts/build.sh'
+      - '.github/workflows/build-1.20.1-forge.yml'
 
 permissions:
   contents: read
