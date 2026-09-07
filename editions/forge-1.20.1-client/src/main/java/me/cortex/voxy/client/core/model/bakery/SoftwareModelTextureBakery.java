@@ -87,11 +87,22 @@ public class SoftwareModelTextureBakery {
 
     private void _doSetupTexture(int glId) {
         glBindTexture(GL_TEXTURE_2D, glId);
-        int width = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH);
-        int height = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT);
 
-        int[] pixels = new int[width * height];
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        // Large modpacks can have an enormous block atlas. Keeping a full
+        // level-0 copy in Java heap cost ~512 MiB in the captured profile.
+        // Voxy only needs this atlas for 16x16 LOD model baking, so use mip 1
+        // when available. This quarters the Java-side atlas copy.
+        int mipLevel = 1;
+        int width = glGetTexLevelParameteri(GL_TEXTURE_2D, mipLevel, GL_TEXTURE_WIDTH);
+        int height = glGetTexLevelParameteri(GL_TEXTURE_2D, mipLevel, GL_TEXTURE_HEIGHT);
+        if (width <= 0 || height <= 0) {
+            mipLevel = 0;
+            width = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH);
+            height = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT);
+        }
+
+        int[] pixels = new int[Math.multiplyExact(width, height)];
+        glGetTexImage(GL_TEXTURE_2D, mipLevel, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
         this.rasterizer.setSamplerTexture(pixels, width, height);
     }
