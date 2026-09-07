@@ -36,7 +36,11 @@ public final class WorldSection {
 
 
     //TODO: should make it dynamically adjust the size allowance based on memory pressure/WorldSection allocation rate (e.g. is it doing a world import)
-    private static final int ARRAY_REUSE_CACHE_SIZE = 400;//500;//32*32*32*8*ARRAY_REUSE_CACHE_SIZE == number of bytes
+    // Each cached array is 32^3 longs (~256 KiB). 400 entries retain
+    // roughly 100 MiB even when the sections are no longer active. The
+    // 1.20.1 large-modpack build keeps a smaller reuse pool to leave more
+    // headroom for Minecraft's own models/chunks.
+    private static final int ARRAY_REUSE_CACHE_SIZE = 128;
     //TODO: maybe just swap this to a ConcurrentLinkedDeque
     private static final AtomicInteger ARRAY_REUSE_CACHE_COUNT = new AtomicInteger(0);
     private static final ConcurrentLinkedDeque<long[]> ARRAY_REUSE_CACHE = new ConcurrentLinkedDeque<>();
