@@ -867,7 +867,17 @@ public class ModelFactory {
     private static BlockColor getColourProvider(Block block) {
         BlockState state = block.defaultBlockState();
         var colors = Minecraft.getInstance().getBlockColors();
-        int colour = colors.getColor(state, null, BlockPos.ZERO, 0);
+        int colour;
+        try {
+            // Some mod colour providers (for example SweetMagic) require a
+            // non-null BlockAndTintGetter and dereference it unconditionally.
+            // The old null-context probe crashed the model bakery thread.
+            colour = colors.getColor(state, null, BlockPos.ZERO, 0);
+        } catch (RuntimeException probeFailure) {
+            Logger.warn("Block colour provider rejected Voxy's null probe for " +
+                    BuiltInRegistries.BLOCK.getKey(block) + "; using safe colour sampling");
+            return colors::getColor;
+        }
         // Keep the pre-foliage-fix behaviour for fluids and all other blocks:
         // their null-context probe uses 0 as the no-provider sentinel.  The
         // 1.20.1 renderer additionally returns -1 for unregistered foliage;
