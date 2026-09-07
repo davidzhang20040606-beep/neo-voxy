@@ -53,10 +53,12 @@ public final class WorldEngine {
     public WorldEngine(SectionStorage storage, @Nullable VoxyInstance instance) {
         this.instanceIn = instance;
 
-        int cacheSize = 1024;
-        if (Runtime.getRuntime().maxMemory()>=(1L<<32)-(200L<<20)) {
-            cacheSize = 2048;
-        }
+        // The original 1.20.1 client scales this cache to 2048 entries on
+        // heaps above ~4 GiB. Each cached WorldSection owns a 32^3 long[]
+        // (~256 KiB), so that policy alone can retain ~512 MiB. On large
+        // modpacks the extra retention pushes G1 close to Xmx; keep a smaller
+        // fixed cache here and let the storage backend refill evicted sections.
+        int cacheSize = 512;
 
         this.storage = storage;
         this.mapper = new Mapper(this.storage);
